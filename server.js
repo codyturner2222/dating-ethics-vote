@@ -120,10 +120,10 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log("╔══════════════════════════════════════════════════╗");
   console.log("║     Dating Ethics Voting App is running!        ║");
   console.log("╠══════════════════════════════════════════════════╣");
-  console.log(`║  Teacher view:  http://localhost:${PORT}/teacher  ║`);
-  console.log(`║  Student view:  http://${localIP}:${PORT}        ║`);
+  console.log(`║  Open:  http://localhost:${PORT}                  ║`);
+  console.log(`║  LAN:   http://${localIP}:${PORT}                 ║`);
   console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
-  console.log("Share the student URL with your class.");
+  console.log("Share the URL. Click 'Host this session' to control scenarios.");
   console.log("Press Ctrl+C to stop the server.");
 });

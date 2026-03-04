@@ -1,6 +1,6 @@
 # Dating Ethics Voting App
 
-Real-time classroom voting app for online dating ethics scenarios. Teacher selects a scenario, students vote on their devices, teacher reveals class distribution.
+Real-time classroom voting app for online dating ethics scenarios. Host selects a scenario, students vote on their devices, host reveals class distribution.
 
 ## Setup (GitHub + Render)
 
@@ -42,16 +42,11 @@ Render will give you a URL like `https://dating-ethics-vote.onrender.com`
 
 ### 4. In Class
 
-- **You open:** `https://dating-ethics-vote.onrender.com/teacher`
-- **Students open:** `https://dating-ethics-vote.onrender.com`
-- Project the teacher view on screen
-- Share the student URL (or put it on a slide / write it on the board)
+Everyone opens the same URL. Click **"Host this session"** at the bottom of the page to get the teacher dashboard where you can select scenarios, see live votes, and reveal results. Students just see the voting interface.
 
 ## How It Works
 
-**Teacher view:** Dark dashboard with all 21 scenarios in the sidebar. Click to broadcast a scenario. See votes in real time. Hit "Reveal Results" when ready — only then do students see the distribution.
-
-**Student view:** Clean mobile-friendly interface. Students see the scenario, tap their judgment (Clearly Permissible → Clearly Wrong), and wait for you to reveal results.
+**Single URL for everyone.** Students see a clean mobile-friendly voting interface. The host clicks "Host this session" to get a full-screen dark dashboard with all 22 scenarios in the sidebar. Click a scenario to broadcast it. See votes arrive in real time. Hit "Reveal Results" when ready — only then do students see the class distribution.
 
 ## Note on Render Free Tier
 

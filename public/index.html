@@ -28,6 +28,24 @@
     margin-bottom: 0.25rem;
   }
 
+  .host-link {
+    margin-top: 2rem;
+    font-size: 0.85rem;
+    color: #B0A8B8;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'EB Garamond', Georgia, serif;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: all 0.2s;
+  }
+
+  .host-link:hover {
+    color: #6D2E46;
+    text-decoration-color: #6D2E46;
+  }
+
   .subtitle {
     font-size: 0.95rem;
     color: #8B7E74;
@@ -35,6 +53,7 @@
     font-style: italic;
   }
 
+  /* ── Waiting state ── */
   #waiting {
     text-align: center;
     padding: 3rem 1rem;
@@ -45,6 +64,7 @@
   #waiting .dot-pulse { display: inline-block; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
+  /* ── Student voting ── */
   #scenario-container {
     width: 100%;
     max-width: 600px;
@@ -151,7 +171,7 @@
     font-size: 1rem;
   }
 
-  /* Results chart */
+  /* ── Results chart (student side) ── */
   #results-container {
     display: none;
     width: 100%;
@@ -203,7 +223,7 @@
   }
 
   .result-count {
-    width: 45px;
+    width: 55px;
     font-size: 0.85rem;
     color: #6B6170;
     text-align: left;
@@ -216,17 +236,265 @@
     font-weight: 600;
     margin-left: 0.25rem;
   }
+
+  /* ═══════════════════════════════════════════════════
+     TEACHER MODE — dark overlay dashboard
+     ═══════════════════════════════════════════════════ */
+  #teacher-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #2A2438;
+    color: #FDF6EC;
+  }
+
+  #teacher-panel.active {
+    display: flex;
+  }
+
+  /* Sidebar */
+  .t-sidebar {
+    width: 320px;
+    background: #1E1A2A;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1rem 0;
+    flex-shrink: 0;
+    border-right: 1px solid #3A3448;
+  }
+
+  .t-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem 0.75rem;
+    border-bottom: 1px solid #3A3448;
+    margin-bottom: 0.5rem;
+  }
+
+  .t-sidebar-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.1rem;
+    color: #A26769;
+  }
+
+  .t-exit-btn {
+    background: none;
+    border: 1px solid #6B6170;
+    color: #B0A8B8;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'EB Garamond', Georgia, serif;
+  }
+
+  .t-exit-btn:hover { border-color: #E07A5F; color: #E07A5F; }
+
+  .t-student-count {
+    font-size: 0.85rem;
+    color: #8B7E74;
+    padding: 0 1rem 0.75rem;
+  }
+
+  .t-student-count span { color: #2D8B7A; font-weight: 600; }
+
+  .t-scenario-item {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #B0A8B8;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .t-scenario-item:hover { background: #2A2438; color: #FDF6EC; }
+
+  .t-scenario-item.active {
+    background: #2A2438;
+    border-left-color: #E07A5F;
+    color: #FDF6EC;
+  }
+
+  .t-scenario-item .num {
+    color: #6D2E46;
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+
+  .t-scenario-item.active .num { color: #E07A5F; }
+
+  /* Main content */
+  .t-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .t-main-header {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.6rem;
+    color: #FDF6EC;
+    margin-bottom: 0.25rem;
+    text-align: center;
+  }
+
+  .t-main-sub {
+    font-size: 1rem;
+    color: #A26769;
+    font-style: italic;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  #t-no-scenario {
+    color: #6B6170;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 3rem;
+  }
+
+  #t-active-scenario {
+    display: none;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .t-scenario-display {
+    background: #FDF6EC;
+    color: #2A2438;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    font-size: 1.4rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid #6D2E46;
+    text-align: center;
+  }
+
+  .t-vote-info {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #8B7E74;
+  }
+
+  .t-vote-info span { color: #FDF6EC; font-weight: 600; }
+
+  /* Teacher results bars */
+  .t-results-panel {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .t-result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .t-result-label {
+    width: 170px;
+    font-size: 0.95rem;
+    color: #ECE2D0;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .t-result-bar-bg {
+    flex: 1;
+    height: 36px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .t-result-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 0.8rem;
+    color: white;
+    font-weight: 600;
+    min-width: 0;
+  }
+
+  .t-result-count {
+    width: 70px;
+    font-size: 0.95rem;
+    color: #B0A8B8;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* Teacher buttons */
+  .t-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .t-btn {
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+
+  .t-btn:hover { transform: translateY(-1px); }
+
+  .t-btn-reveal { background: #2D8B7A; color: white; }
+  .t-btn-reveal:hover { background: #1F6B5E; }
+  .t-btn-clear { background: #E07A5F; color: white; }
+  .t-btn-clear:hover { background: #C96B50; }
+  .t-btn-next { background: #6D2E46; color: white; }
+  .t-btn-next:hover { background: #4A1E30; }
+
+  .t-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none;
+  }
+
+  /* Teacher mode responsive */
+  @media (max-width: 900px) {
+    #teacher-panel { flex-direction: column; }
+    .t-sidebar { width: 100%; height: auto; max-height: 200px; }
+    .t-scenario-display { font-size: 1.1rem; }
+  }
 </style>
 </head>
 <body>
 
-<h1>Ethics of Online Dating</h1>
+<h1 id="app-title">Ethics of Online Dating</h1>
 <p class="subtitle">Where do you draw the line?</p>
 
+<!-- ── Student: waiting state ── -->
 <div id="waiting">
   <p>Waiting for the next scenario<span class="dot-pulse">...</span></p>
 </div>
 
+<!-- ── Student: scenario + voting ── -->
 <div id="scenario-container">
   <p class="scenario-number" id="scenario-number"></p>
   <div class="scenario-text" id="scenario-text"></div>
@@ -257,14 +525,56 @@
   </div>
 </div>
 
+<!-- ── Student: results (after teacher reveals) ── -->
 <div id="results-container">
   <div class="results-title">Class Results</div>
   <div id="results-bars"></div>
 </div>
 
-<script>
-const socket = io({ query: { role: "student" } });
+<button class="host-link" onclick="enterTeacherMode()">Host this session</button>
 
+<!-- ═══════════════════════════════════════════════════
+     TEACHER PANEL — full-screen overlay
+     ═══════════════════════════════════════════════════ -->
+<div id="teacher-panel">
+  <aside class="t-sidebar">
+    <div class="t-sidebar-header">
+      <div class="t-sidebar-title">Scenarios</div>
+      <button class="t-exit-btn" onclick="exitTeacherMode()">Exit</button>
+    </div>
+    <div class="t-student-count">Students connected: <span id="t-student-count">0</span></div>
+    <div id="t-scenario-list"></div>
+  </aside>
+
+  <main class="t-main">
+    <h1 class="t-main-header">Ethics of Online Dating</h1>
+    <p class="t-main-sub">Teacher Dashboard</p>
+
+    <div id="t-no-scenario">
+      <p>Select a scenario from the sidebar to begin.</p>
+    </div>
+
+    <div id="t-active-scenario">
+      <div class="t-scenario-display" id="t-scenario-display"></div>
+
+      <div class="t-vote-info">
+        <div>Votes: <span id="t-total-votes">0</span></div>
+        <div>Students: <span id="t-connected-count">0</span></div>
+      </div>
+
+      <div class="t-results-panel" id="t-results-panel"></div>
+
+      <div class="t-controls">
+        <button class="t-btn t-btn-reveal" id="t-btn-reveal" onclick="tRevealResults()">Reveal Results</button>
+        <button class="t-btn t-btn-clear" id="t-btn-clear" onclick="tClearVotes()">Clear Votes</button>
+        <button class="t-btn t-btn-next" id="t-btn-next" onclick="tNextScenario()">Next Scenario →</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── Shared data ──────────────────────────────────────
 const categories = [
   { key: "clearly_permissible", label: "Clearly Permissible", color: "#2D8B7A" },
   { key: "slightly_questionable", label: "Slightly Questionable", color: "#7AB89B" },
@@ -273,24 +583,6 @@ const categories = [
   { key: "clearly_wrong", label: "Clearly Wrong", color: "#6D2E46" },
 ];
 
-let currentIndex = null;
-let hasVoted = false;
-let myVote = null;
-
-// Elements
-const waitingEl = document.getElementById("waiting");
-const containerEl = document.getElementById("scenario-container");
-const scenarioNumEl = document.getElementById("scenario-number");
-const scenarioTextEl = document.getElementById("scenario-text");
-const votePromptEl = document.getElementById("vote-prompt");
-const voteBtnsEl = document.getElementById("vote-buttons");
-const votedMsgEl = document.getElementById("voted-message");
-const resultsEl = document.getElementById("results-container");
-const resultsBarsEl = document.getElementById("results-bars");
-
-const buttons = document.querySelectorAll(".vote-btn");
-
-// Scenarios (must match teacher)
 const scenarios = [
   "Someone uses photos that are 3 years old, before they gained significant weight.",
   "A person lists their height as 2 inches taller than they actually are.",
@@ -316,7 +608,66 @@ const scenarios = [
   "A student's wealthy parents buy them unlimited visibility boosts as a birthday gift — giving them significantly more matches than classmates who can't afford them.",
 ];
 
-// Vote handlers
+// ── Mode state ───────────────────────────────────────
+let isTeacher = false;
+
+// ── Student state ────────────────────────────────────
+let currentIndex = null;
+let hasVoted = false;
+let myVote = null;
+
+// ── Teacher state ────────────────────────────────────
+let tCurrentIndex = null;
+let tCurrentVotes = {};
+let tTotalVoters = 0;
+
+// ── Socket (connects as student by default) ──────────
+let socket = io({ query: { role: "student" } });
+
+// ══════════════════════════════════════════════════════
+//  TEACHER MODE TOGGLE
+// ══════════════════════════════════════════════════════
+function enterTeacherMode() {
+  isTeacher = true;
+
+  // Disconnect student socket, reconnect as teacher
+  socket.disconnect();
+  socket = io({ query: { role: "teacher" } });
+  attachTeacherListeners();
+
+  // Show teacher panel
+  document.getElementById("teacher-panel").classList.add("active");
+
+  // Build sidebar list
+  buildTeacherSidebar();
+}
+
+function exitTeacherMode() {
+  isTeacher = false;
+
+  // Hide teacher panel
+  document.getElementById("teacher-panel").classList.remove("active");
+
+  // Disconnect teacher socket, reconnect as student
+  socket.disconnect();
+  socket = io({ query: { role: "student" } });
+  attachStudentListeners();
+}
+
+// ══════════════════════════════════════════════════════
+//  STUDENT LOGIC
+// ══════════════════════════════════════════════════════
+const waitingEl = document.getElementById("waiting");
+const containerEl = document.getElementById("scenario-container");
+const scenarioNumEl = document.getElementById("scenario-number");
+const scenarioTextEl = document.getElementById("scenario-text");
+const votePromptEl = document.getElementById("vote-prompt");
+const voteBtnsEl = document.getElementById("vote-buttons");
+const votedMsgEl = document.getElementById("voted-message");
+const resultsEl = document.getElementById("results-container");
+const resultsBarsEl = document.getElementById("results-bars");
+const buttons = document.querySelectorAll(".vote-btn");
+
 buttons.forEach(btn => {
   btn.addEventListener("click", () => {
     if (hasVoted || currentIndex === null) return;
@@ -324,7 +675,6 @@ buttons.forEach(btn => {
     hasVoted = true;
     myVote = cat;
 
-    // Visual feedback
     btn.classList.add("selected");
     buttons.forEach(b => { b.disabled = true; });
     votedMsgEl.style.display = "block";
@@ -334,53 +684,73 @@ buttons.forEach(btn => {
   });
 });
 
-// Socket events
-socket.on("scenarioChanged", ({ index, resultsRevealed: revealed }) => {
-  currentIndex = index;
-  hasVoted = false;
-  myVote = null;
-
-  // Reset UI
-  waitingEl.style.display = "none";
-  containerEl.style.display = "block";
-  resultsEl.style.display = "none";
-  votedMsgEl.style.display = "none";
-  votePromptEl.style.display = "block";
-  votePromptEl.textContent = "How would you classify this?";
-
-  buttons.forEach(b => {
-    b.disabled = false;
-    b.classList.remove("selected");
-  });
-
-  scenarioNumEl.textContent = `Scenario ${index + 1} of ${scenarios.length}`;
-  scenarioTextEl.textContent = scenarios[index] || "Unknown scenario";
-});
-
-socket.on("votedConfirm", ({ category, votes }) => {
-  // Already handled visually on click
-});
-
-socket.on("resultsRevealed", ({ scenarioIndex, votes }) => {
-  if (scenarioIndex !== currentIndex) return;
-  showResults(votes);
-});
-
-socket.on("votesCleared", ({ scenarioIndex }) => {
-  if (scenarioIndex === currentIndex) {
+function attachStudentListeners() {
+  socket.on("scenarioChanged", ({ index }) => {
+    currentIndex = index;
     hasVoted = false;
     myVote = null;
+
+    waitingEl.style.display = "none";
+    containerEl.style.display = "block";
     resultsEl.style.display = "none";
     votedMsgEl.style.display = "none";
     votePromptEl.style.display = "block";
+    votePromptEl.textContent = "How would you classify this?";
+
     buttons.forEach(b => {
       b.disabled = false;
       b.classList.remove("selected");
     });
-  }
-});
 
-function showResults(votes) {
+    scenarioNumEl.textContent = `Scenario ${index + 1} of ${scenarios.length}`;
+    scenarioTextEl.textContent = scenarios[index] || "Unknown scenario";
+  });
+
+  socket.on("votedConfirm", () => {});
+
+  socket.on("resultsRevealed", ({ scenarioIndex, votes }) => {
+    if (scenarioIndex !== currentIndex) return;
+    showStudentResults(votes);
+  });
+
+  socket.on("votesCleared", ({ scenarioIndex }) => {
+    if (scenarioIndex === currentIndex) {
+      hasVoted = false;
+      myVote = null;
+      resultsEl.style.display = "none";
+      votedMsgEl.style.display = "none";
+      votePromptEl.style.display = "block";
+      buttons.forEach(b => {
+        b.disabled = false;
+        b.classList.remove("selected");
+      });
+    }
+  });
+
+  socket.on("state", ({ currentScenarioIndex }) => {
+    if (currentScenarioIndex !== null && currentScenarioIndex !== undefined) {
+      currentIndex = currentScenarioIndex;
+      hasVoted = false;
+      myVote = null;
+
+      waitingEl.style.display = "none";
+      containerEl.style.display = "block";
+      resultsEl.style.display = "none";
+      votedMsgEl.style.display = "none";
+      votePromptEl.style.display = "block";
+
+      buttons.forEach(b => {
+        b.disabled = false;
+        b.classList.remove("selected");
+      });
+
+      scenarioNumEl.textContent = `Scenario ${currentScenarioIndex + 1} of ${scenarios.length}`;
+      scenarioTextEl.textContent = scenarios[currentScenarioIndex] || "Unknown scenario";
+    }
+  });
+}
+
+function showStudentResults(votes) {
   resultsEl.style.display = "block";
   votedMsgEl.querySelector("p").textContent = "Results are in!";
 
@@ -402,6 +772,106 @@ function showResults(votes) {
       </div>
     `;
   }).join("");
+}
+
+// Attach student listeners on load
+attachStudentListeners();
+
+// ══════════════════════════════════════════════════════
+//  TEACHER LOGIC
+// ══════════════════════════════════════════════════════
+function buildTeacherSidebar() {
+  const listEl = document.getElementById("t-scenario-list");
+  listEl.innerHTML = "";
+  scenarios.forEach((s, i) => {
+    const div = document.createElement("div");
+    div.className = "t-scenario-item";
+    div.innerHTML = `<span class="num">${i + 1}.</span> ${s.substring(0, 55)}${s.length > 55 ? '…' : ''}`;
+    div.onclick = () => tSelectScenario(i);
+    listEl.appendChild(div);
+  });
+}
+
+function tSelectScenario(index) {
+  tCurrentIndex = index;
+  tCurrentVotes = {};
+  tTotalVoters = 0;
+
+  document.querySelectorAll(".t-scenario-item").forEach((el, i) => {
+    el.classList.toggle("active", i === index);
+  });
+
+  document.getElementById("t-no-scenario").style.display = "none";
+  document.getElementById("t-active-scenario").style.display = "block";
+  document.getElementById("t-scenario-display").textContent = scenarios[index];
+  document.getElementById("t-btn-reveal").disabled = false;
+
+  tUpdateResults();
+  socket.emit("teacher:selectScenario", index);
+}
+
+function tRevealResults() {
+  socket.emit("teacher:revealResults", tCurrentIndex);
+  document.getElementById("t-btn-reveal").disabled = true;
+}
+
+function tClearVotes() {
+  tCurrentVotes = {};
+  tTotalVoters = 0;
+  tUpdateResults();
+  socket.emit("teacher:clearVotes", tCurrentIndex);
+  document.getElementById("t-btn-reveal").disabled = false;
+}
+
+function tNextScenario() {
+  if (tCurrentIndex !== null && tCurrentIndex < scenarios.length - 1) {
+    tSelectScenario(tCurrentIndex + 1);
+  }
+}
+
+function tUpdateResults() {
+  const total = categories.reduce((sum, c) => sum + (tCurrentVotes[c.key] || 0), 0);
+  const maxCount = Math.max(...categories.map(c => tCurrentVotes[c.key] || 0), 1);
+
+  document.getElementById("t-total-votes").textContent = total;
+
+  const panel = document.getElementById("t-results-panel");
+  panel.innerHTML = categories.map(c => {
+    const count = tCurrentVotes[c.key] || 0;
+    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+    const barWidth = total > 0 ? (count / maxCount * 100) : 0;
+    return `
+      <div class="t-result-row">
+        <div class="t-result-label">${c.label}</div>
+        <div class="t-result-bar-bg">
+          <div class="t-result-bar" style="width: ${barWidth}%; background: ${c.color};">
+            ${count > 0 ? count : ''}
+          </div>
+        </div>
+        <div class="t-result-count">${count} (${pct}%)</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function attachTeacherListeners() {
+  socket.on("studentCount", (count) => {
+    document.getElementById("t-student-count").textContent = count;
+    document.getElementById("t-connected-count").textContent = count;
+  });
+
+  socket.on("votesUpdated", ({ scenarioIndex, votes, totalVoters: tv }) => {
+    if (scenarioIndex === tCurrentIndex) {
+      tCurrentVotes = votes;
+      tTotalVoters = tv;
+      tUpdateResults();
+    }
+  });
+
+  socket.on("state", ({ studentCount }) => {
+    document.getElementById("t-student-count").textContent = studentCount;
+    document.getElementById("t-connected-count").textContent = studentCount;
+  });
 }
 </script>
 </body>
