@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethics Vote — Teacher</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    background: #2A2438;
+    color: #FDF6EC;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar: scenario list ── */
+  .sidebar {
+    width: 320px;
+    background: #1E1A2A;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1rem 0;
+    flex-shrink: 0;
+    border-right: 1px solid #3A3448;
+  }
+
+  .sidebar-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.1rem;
+    color: #A26769;
+    padding: 0.5rem 1rem 0.75rem;
+    border-bottom: 1px solid #3A3448;
+    margin-bottom: 0.5rem;
+  }
+
+  .student-count {
+    font-size: 0.85rem;
+    color: #8B7E74;
+    padding: 0 1rem 0.75rem;
+  }
+
+  .student-count span { color: #2D8B7A; font-weight: 600; }
+
+  .scenario-item {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #B0A8B8;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .scenario-item:hover { background: #2A2438; color: #FDF6EC; }
+
+  .scenario-item.active {
+    background: #2A2438;
+    border-left-color: #E07A5F;
+    color: #FDF6EC;
+  }
+
+  .scenario-item .num {
+    color: #6D2E46;
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+
+  .scenario-item.active .num { color: #E07A5F; }
+
+  /* ── Main content ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .main-header {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.6rem;
+    color: #FDF6EC;
+    margin-bottom: 0.25rem;
+    text-align: center;
+  }
+
+  .main-sub {
+    font-size: 1rem;
+    color: #A26769;
+    font-style: italic;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  #no-scenario {
+    color: #6B6170;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 3rem;
+  }
+
+  #active-scenario {
+    display: none;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .scenario-display {
+    background: #FDF6EC;
+    color: #2A2438;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    font-size: 1.4rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid #6D2E46;
+    text-align: center;
+  }
+
+  .vote-info {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #8B7E74;
+  }
+
+  .vote-info span { color: #FDF6EC; font-weight: 600; }
+
+  /* Results bars */
+  .results-panel {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .result-label {
+    width: 170px;
+    font-size: 0.95rem;
+    color: #ECE2D0;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .result-bar-bg {
+    flex: 1;
+    height: 36px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .result-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 0.8rem;
+    color: white;
+    font-weight: 600;
+    min-width: 0;
+  }
+
+  .result-count {
+    width: 70px;
+    font-size: 0.95rem;
+    color: #B0A8B8;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+
+  .btn-reveal {
+    background: #2D8B7A;
+    color: white;
+  }
+
+  .btn-reveal:hover { background: #1F6B5E; }
+
+  .btn-clear {
+    background: #E07A5F;
+    color: white;
+  }
+
+  .btn-clear:hover { background: #C96B50; }
+
+  .btn-next {
+    background: #6D2E46;
+    color: white;
+  }
+
+  .btn-next:hover { background: #4A1E30; }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; max-height: 200px; }
+    .scenario-display { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-title">Scenarios</div>
+  <div class="student-count">Students connected: <span id="student-count">0</span></div>
+  <div id="scenario-list"></div>
+</aside>
+
+<main class="main">
+  <h1 class="main-header">Ethics of Online Dating</h1>
+  <p class="main-sub">Teacher Dashboard</p>
+
+  <div id="no-scenario">
+    <p>Select a scenario from the sidebar to begin.</p>
+  </div>
+
+  <div id="active-scenario">
+    <div class="scenario-display" id="scenario-display"></div>
+
+    <div class="vote-info">
+      <div>Votes: <span id="total-votes">0</span></div>
+      <div>Students: <span id="connected-count">0</span></div>
+    </div>
+
+    <div class="results-panel" id="results-panel"></div>
+
+    <div class="controls">
+      <button class="btn btn-reveal" id="btn-reveal" onclick="revealResults()">Reveal Results</button>
+      <button class="btn btn-clear" id="btn-clear" onclick="clearVotes()">Clear Votes</button>
+      <button class="btn btn-next" id="btn-next" onclick="nextScenario()">Next Scenario →</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const socket = io({ query: { role: "teacher" } });
+
+const categories = [
+  { key: "clearly_permissible", label: "Clearly Permissible", color: "#2D8B7A" },
+  { key: "slightly_questionable", label: "Slightly Questionable", color: "#7AB89B" },
+  { key: "genuinely_contested", label: "Genuinely Contested", color: "#D4A853" },
+  { key: "probably_wrong", label: "Probably Wrong", color: "#E07A5F" },
+  { key: "clearly_wrong", label: "Clearly Wrong", color: "#6D2E46" },
+];
+
+const scenarios = [
+  "Someone uses photos that are 3 years old, before they gained significant weight.",
+  "A person lists their height as 2 inches taller than they actually are.",
+  "Someone uses photos from their \"best angle\" that most people wouldn't recognize as them in person.",
+  "Someone uses slightly filtered photos that make them look a little better — similar to wearing makeup.",
+  "Someone who just wants a hookup describes themselves as \"looking for something serious\" to get more matches.",
+  "A person who is genuinely undecided about what they want says they're \"open to anything.\"",
+  "Someone going through a divorce lists themselves as \"single\" before it's finalized.",
+  "Someone doesn't disclose a chronic illness until the relationship gets serious.",
+  "Someone doesn't mention they have a nonviolent felony conviction from 10 years ago — even after three dates.",
+  "A person omits their real age and lists themselves as 2 years younger than they actually are.",
+  "A person exclusively dates within their own race and says it's just a \"personal preference\" — no different from preferring blondes.",
+  "A person filters out matches below a certain income level.",
+  "A user filters out people with disabilities.",
+  "Someone \"ghosts\" a match after a solid first date with no explanation.",
+  "A person sends the exact same opening message to 10 people at once.",
+  "Being on five dating apps simultaneously and talking to twenty people at once without telling any of them.",
+  "Using ChatGPT to write your opening messages and banter.",
+  "Breadcrumbing someone for weeks — sending just enough messages to keep them interested while being only mildly interested yourself. They're currently 5th on your list of prospective partners.",
+  "Screenshotting someone's awkward profile and sharing it in your group chat for laughs.",
+  "Someone lists their job title from 6 months ago because they're currently unemployed and it \"doesn't define them.\"",
+  "A student's wealthy parents buy them unlimited visibility boosts as a birthday gift — giving them significantly more matches than classmates who can't afford them.",
+];
+
+let currentIndex = null;
+let currentVotes = {};
+let totalVoters = 0;
+
+// Build sidebar
+const listEl = document.getElementById("scenario-list");
+scenarios.forEach((s, i) => {
+  const div = document.createElement("div");
+  div.className = "scenario-item";
+  div.innerHTML = `<span class="num">${i + 1}.</span> ${s.substring(0, 60)}${s.length > 60 ? '…' : ''}`;
+  div.onclick = () => selectScenario(i);
+  listEl.appendChild(div);
+});
+
+function selectScenario(index) {
+  currentIndex = index;
+  currentVotes = {};
+  totalVoters = 0;
+
+  // Update sidebar
+  document.querySelectorAll(".scenario-item").forEach((el, i) => {
+    el.classList.toggle("active", i === index);
+  });
+
+  // Update main
+  document.getElementById("no-scenario").style.display = "none";
+  document.getElementById("active-scenario").style.display = "block";
+  document.getElementById("scenario-display").textContent = scenarios[index];
+  document.getElementById("btn-reveal").disabled = false;
+
+  updateResults();
+  socket.emit("teacher:selectScenario", index);
+}
+
+function revealResults() {
+  socket.emit("teacher:revealResults", currentIndex);
+  document.getElementById("btn-reveal").disabled = true;
+}
+
+function clearVotes() {
+  currentVotes = {};
+  totalVoters = 0;
+  updateResults();
+  socket.emit("teacher:clearVotes", currentIndex);
+  document.getElementById("btn-reveal").disabled = false;
+}
+
+function nextScenario() {
+  if (currentIndex !== null && currentIndex < scenarios.length - 1) {
+    selectScenario(currentIndex + 1);
+  }
+}
+
+function updateResults() {
+  const total = categories.reduce((sum, c) => sum + (currentVotes[c.key] || 0), 0);
+  const maxCount = Math.max(...categories.map(c => currentVotes[c.key] || 0), 1);
+
+  document.getElementById("total-votes").textContent = total;
+
+  const panel = document.getElementById("results-panel");
+  panel.innerHTML = categories.map(c => {
+    const count = currentVotes[c.key] || 0;
+    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+    const barWidth = total > 0 ? (count / maxCount * 100) : 0;
+    return `
+      <div class="result-row">
+        <div class="result-label">${c.label}</div>
+        <div class="result-bar-bg">
+          <div class="result-bar" style="width: ${barWidth}%; background: ${c.color};">
+            ${count > 0 ? count : ''}
+          </div>
+        </div>
+        <div class="result-count">${count} (${pct}%)</div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Socket events
+socket.on("studentCount", (count) => {
+  document.getElementById("student-count").textContent = count;
+  document.getElementById("connected-count").textContent = count;
+});
+
+socket.on("votesUpdated", ({ scenarioIndex, votes, totalVoters: tv }) => {
+  if (scenarioIndex === currentIndex) {
+    currentVotes = votes;
+    totalVoters = tv;
+    updateResults();
+  }
+});
+
+socket.on("state", ({ studentCount }) => {
+  document.getElementById("student-count").textContent = studentCount;
+  document.getElementById("connected-count").textContent = studentCount;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethics Vote</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    background: #FDF6EC;
+    color: #2A2438;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.5rem;
+    color: #6D2E46;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: #8B7E74;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+
+  #waiting {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6B6170;
+    font-size: 1.15rem;
+  }
+
+  #waiting .dot-pulse { display: inline-block; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  #scenario-container {
+    width: 100%;
+    max-width: 600px;
+    display: none;
+  }
+
+  .scenario-number {
+    font-size: 0.85rem;
+    color: #A26769;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .scenario-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #2A2438;
+    background: white;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #6D2E46;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+  }
+
+  .vote-prompt {
+    font-size: 1rem;
+    color: #4A4350;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
+  .vote-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .vote-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.05rem;
+    color: #2A2438;
+    text-align: left;
+  }
+
+  .vote-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+  .vote-btn:active { transform: translateY(0); }
+
+  .vote-btn .dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .vote-btn[data-cat="clearly_permissible"] .dot { background: #2D8B7A; }
+  .vote-btn[data-cat="slightly_questionable"] .dot { background: #7AB89B; }
+  .vote-btn[data-cat="genuinely_contested"] .dot { background: #D4A853; }
+  .vote-btn[data-cat="probably_wrong"] .dot { background: #E07A5F; }
+  .vote-btn[data-cat="clearly_wrong"] .dot { background: #6D2E46; }
+
+  .vote-btn.selected {
+    border-color: #6D2E46;
+    background: #FAF0F3;
+  }
+
+  .vote-btn:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .vote-btn:disabled:hover { transform: none; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+
+  #voted-message {
+    display: none;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  #voted-message .checkmark {
+    font-size: 2rem;
+    color: #2D8B7A;
+    margin-bottom: 0.5rem;
+  }
+
+  #voted-message p {
+    color: #6B6170;
+    font-size: 1rem;
+  }
+
+  /* Results chart */
+  #results-container {
+    display: none;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .results-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.1rem;
+    color: #6D2E46;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .result-label {
+    width: 140px;
+    font-size: 0.85rem;
+    color: #4A4350;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .result-bar-bg {
+    flex: 1;
+    height: 28px;
+    background: #F7F2EB;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .result-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+    min-width: 0;
+  }
+
+  .result-count {
+    width: 45px;
+    font-size: 0.85rem;
+    color: #6B6170;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .your-vote-marker {
+    font-size: 0.75rem;
+    color: #6D2E46;
+    font-weight: 600;
+    margin-left: 0.25rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>Ethics of Online Dating</h1>
+<p class="subtitle">Where do you draw the line?</p>
+
+<div id="waiting">
+  <p>Waiting for the next scenario<span class="dot-pulse">...</span></p>
+</div>
+
+<div id="scenario-container">
+  <p class="scenario-number" id="scenario-number"></p>
+  <div class="scenario-text" id="scenario-text"></div>
+
+  <p class="vote-prompt" id="vote-prompt">How would you classify this?</p>
+
+  <div class="vote-buttons" id="vote-buttons">
+    <button class="vote-btn" data-cat="clearly_permissible">
+      <span class="dot"></span> Clearly Permissible
+    </button>
+    <button class="vote-btn" data-cat="slightly_questionable">
+      <span class="dot"></span> Slightly Questionable
+    </button>
+    <button class="vote-btn" data-cat="genuinely_contested">
+      <span class="dot"></span> Genuinely Contested
+    </button>
+    <button class="vote-btn" data-cat="probably_wrong">
+      <span class="dot"></span> Probably Wrong
+    </button>
+    <button class="vote-btn" data-cat="clearly_wrong">
+      <span class="dot"></span> Clearly Wrong
+    </button>
+  </div>
+
+  <div id="voted-message">
+    <div class="checkmark">✓</div>
+    <p>Vote recorded! Waiting for results...</p>
+  </div>
+</div>
+
+<div id="results-container">
+  <div class="results-title">Class Results</div>
+  <div id="results-bars"></div>
+</div>
+
+<script>
+const socket = io({ query: { role: "student" } });
+
+const categories = [
+  { key: "clearly_permissible", label: "Clearly Permissible", color: "#2D8B7A" },
+  { key: "slightly_questionable", label: "Slightly Questionable", color: "#7AB89B" },
+  { key: "genuinely_contested", label: "Genuinely Contested", color: "#D4A853" },
+  { key: "probably_wrong", label: "Probably Wrong", color: "#E07A5F" },
+  { key: "clearly_wrong", label: "Clearly Wrong", color: "#6D2E46" },
+];
+
+let currentIndex = null;
+let hasVoted = false;
+let myVote = null;
+
+// Elements
+const waitingEl = document.getElementById("waiting");
+const containerEl = document.getElementById("scenario-container");
+const scenarioNumEl = document.getElementById("scenario-number");
+const scenarioTextEl = document.getElementById("scenario-text");
+const votePromptEl = document.getElementById("vote-prompt");
+const voteBtnsEl = document.getElementById("vote-buttons");
+const votedMsgEl = document.getElementById("voted-message");
+const resultsEl = document.getElementById("results-container");
+const resultsBarsEl = document.getElementById("results-bars");
+
+const buttons = document.querySelectorAll(".vote-btn");
+
+// Scenarios (must match teacher)
+const scenarios = [
+  "Someone uses photos that are 3 years old, before they gained significant weight.",
+  "A person lists their height as 2 inches taller than they actually are.",
+  "Someone uses photos from their \"best angle\" that most people wouldn't recognize as them in person.",
+  "Someone uses slightly filtered photos that make them look a little better — similar to wearing makeup.",
+  "Someone who just wants a hookup describes themselves as \"looking for something serious\" to get more matches.",
+  "A person who is genuinely undecided about what they want says they're \"open to anything.\"",
+  "Someone going through a divorce lists themselves as \"single\" before it's finalized.",
+  "Someone doesn't disclose a chronic illness until the relationship gets serious.",
+  "Someone doesn't mention they have a nonviolent felony conviction from 10 years ago — even after three dates.",
+  "A person omits their real age and lists themselves as 2 years younger than they actually are.",
+  "A person exclusively dates within their own race and says it's just a \"personal preference\" — no different from preferring blondes.",
+  "A person filters out matches below a certain income level.",
+  "A user filters out people with disabilities.",
+  "Someone \"ghosts\" a match after a solid first date with no explanation.",
+  "A person sends the exact same opening message to 10 people at once.",
+  "Being on five dating apps simultaneously and talking to twenty people at once without telling any of them.",
+  "Using ChatGPT to write your opening messages and banter.",
+  "Breadcrumbing someone for weeks — sending just enough messages to keep them interested while being only mildly interested yourself. They're currently 5th on your list of prospective partners.",
+  "Screenshotting someone's awkward profile and sharing it in your group chat for laughs.",
+  "Someone lists their job title from 6 months ago because they're currently unemployed and it \"doesn't define them.\"",
+  "A student's wealthy parents buy them unlimited visibility boosts as a birthday gift — giving them significantly more matches than classmates who can't afford them.",
+];
+
+// Vote handlers
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (hasVoted || currentIndex === null) return;
+    const cat = btn.dataset.cat;
+    hasVoted = true;
+    myVote = cat;
+
+    // Visual feedback
+    btn.classList.add("selected");
+    buttons.forEach(b => { b.disabled = true; });
+    votedMsgEl.style.display = "block";
+    votePromptEl.style.display = "none";
+
+    socket.emit("student:vote", { scenarioIndex: currentIndex, category: cat });
+  });
+});
+
+// Socket events
+socket.on("scenarioChanged", ({ index, resultsRevealed: revealed }) => {
+  currentIndex = index;
+  hasVoted = false;
+  myVote = null;
+
+  // Reset UI
+  waitingEl.style.display = "none";
+  containerEl.style.display = "block";
+  resultsEl.style.display = "none";
+  votedMsgEl.style.display = "none";
+  votePromptEl.style.display = "block";
+  votePromptEl.textContent = "How would you classify this?";
+
+  buttons.forEach(b => {
+    b.disabled = false;
+    b.classList.remove("selected");
+  });
+
+  scenarioNumEl.textContent = `Scenario ${index + 1} of ${scenarios.length}`;
+  scenarioTextEl.textContent = scenarios[index] || "Unknown scenario";
+});
+
+socket.on("votedConfirm", ({ category, votes }) => {
+  // Already handled visually on click
+});
+
+socket.on("resultsRevealed", ({ scenarioIndex, votes }) => {
+  if (scenarioIndex !== currentIndex) return;
+  showResults(votes);
+});
+
+socket.on("votesCleared", ({ scenarioIndex }) => {
+  if (scenarioIndex === currentIndex) {
+    hasVoted = false;
+    myVote = null;
+    resultsEl.style.display = "none";
+    votedMsgEl.style.display = "none";
+    votePromptEl.style.display = "block";
+    buttons.forEach(b => {
+      b.disabled = false;
+      b.classList.remove("selected");
+    });
+  }
+});
+
+function showResults(votes) {
+  resultsEl.style.display = "block";
+  votedMsgEl.querySelector("p").textContent = "Results are in!";
+
+  const total = categories.reduce((sum, c) => sum + (votes[c.key] || 0), 0);
+  const maxCount = Math.max(...categories.map(c => votes[c.key] || 0), 1);
+
+  resultsBarsEl.innerHTML = categories.map(c => {
+    const count = votes[c.key] || 0;
+    const pct = total > 0 ? (count / total * 100) : 0;
+    const barWidth = total > 0 ? (count / maxCount * 100) : 0;
+    const isMyVote = myVote === c.key;
+    return `
+      <div class="result-row">
+        <div class="result-label">${c.label}${isMyVote ? '<span class="your-vote-marker"> ← You</span>' : ''}</div>
+        <div class="result-bar-bg">
+          <div class="result-bar" style="width: ${barWidth}%; background: ${c.color};"></div>
+        </div>
+        <div class="result-count">${count} (${Math.round(pct)}%)</div>
+      </div>
+    `;
+  }).join("");
+}
+</script>
+</body>
+</html>
