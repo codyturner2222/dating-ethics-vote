@@ -9,102 +9,153 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// ── State ──────────────────────────────────────────────────
-let currentScenarioIndex = null;
-let votes = {};        // { scenarioIndex: { category: count } }
-let voterIds = {};     // { scenarioIndex: Set of socket ids that voted }
-let resultsRevealed = {};  // { scenarioIndex: boolean }
-let connectedStudents = 0;
+// ── Room management ───────────────────────────────────
+const rooms = {}; // { roomCode: { currentScenarioIndex, votes, voterIds, resultsRevealed, teacherSocketId, studentCount } }
 
-// ── Socket.io ──────────────────────────────────────────────
-io.on("connection", (socket) => {
-  const isTeacher = socket.handshake.query.role === "teacher";
-
-  if (!isTeacher) {
-    connectedStudents++;
-    io.emit("studentCount", connectedStudents);
+function generateRoomCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars (0/O, 1/I)
+  let code = "";
+  for (let i = 0; i < 4; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
   }
+  // Make sure it's unique
+  if (rooms[code]) return generateRoomCode();
+  return code;
+}
 
-  // Send current state on connect
-  socket.emit("state", {
-    currentScenarioIndex,
-    votes: votes[currentScenarioIndex] || {},
-    hasVoted: false,
-    resultsRevealed: resultsRevealed[currentScenarioIndex] || false,
-    studentCount: connectedStudents,
+// ── Socket.io ──────────────────────────────────────────
+io.on("connection", (socket) => {
+  let myRoom = null;
+  let myRole = null;
+
+  // Host creates a room
+  socket.on("host:create", (callback) => {
+    const code = generateRoomCode();
+    rooms[code] = {
+      currentScenarioIndex: null,
+      votes: {},
+      voterIds: {},
+      resultsRevealed: {},
+      teacherSocketId: socket.id,
+      studentCount: 0,
+    };
+    myRoom = code;
+    myRole = "teacher";
+    socket.join(code);
+    callback({ roomCode: code });
+  });
+
+  // Student joins a room
+  socket.on("student:join", (code, callback) => {
+    const upper = (code || "").toUpperCase().trim();
+    if (!rooms[upper]) {
+      callback({ error: "Room not found. Check the code and try again." });
+      return;
+    }
+    myRoom = upper;
+    myRole = "student";
+    socket.join(upper);
+    rooms[upper].studentCount++;
+
+    // Tell teacher about new student count
+    io.to(upper).emit("studentCount", rooms[upper].studentCount);
+
+    // Send current state to this student
+    const room = rooms[upper];
+    if (room.currentScenarioIndex !== null) {
+      socket.emit("scenarioChanged", {
+        index: room.currentScenarioIndex,
+        resultsRevealed: room.resultsRevealed[room.currentScenarioIndex] || false,
+        votes: room.resultsRevealed[room.currentScenarioIndex] ? room.votes[room.currentScenarioIndex] : null,
+      });
+    }
+
+    callback({ success: true, studentCount: rooms[upper].studentCount });
   });
 
   // Teacher selects a scenario
   socket.on("teacher:selectScenario", (index) => {
-    currentScenarioIndex = index;
-    if (!votes[index]) {
-      votes[index] = {};
-      voterIds[index] = new Set();
-      resultsRevealed[index] = false;
+    if (!myRoom || !rooms[myRoom]) return;
+    const room = rooms[myRoom];
+    room.currentScenarioIndex = index;
+    if (!room.votes[index]) {
+      room.votes[index] = {};
+      room.voterIds[index] = new Set();
+      room.resultsRevealed[index] = false;
     }
-    io.emit("scenarioChanged", {
+    io.to(myRoom).emit("scenarioChanged", {
       index,
-      votes: votes[index],
-      resultsRevealed: resultsRevealed[index],
+      votes: room.votes[index],
+      resultsRevealed: room.resultsRevealed[index],
     });
   });
 
   // Student votes
   socket.on("student:vote", ({ scenarioIndex, category }) => {
+    if (!myRoom || !rooms[myRoom]) return;
+    const room = rooms[myRoom];
     if (scenarioIndex === null || scenarioIndex === undefined) return;
-    if (!votes[scenarioIndex]) {
-      votes[scenarioIndex] = {};
-      voterIds[scenarioIndex] = new Set();
+    if (!room.votes[scenarioIndex]) {
+      room.votes[scenarioIndex] = {};
+      room.voterIds[scenarioIndex] = new Set();
     }
     // Prevent double voting
-    if (voterIds[scenarioIndex].has(socket.id)) return;
-    voterIds[scenarioIndex].add(socket.id);
+    if (room.voterIds[scenarioIndex].has(socket.id)) return;
+    room.voterIds[scenarioIndex].add(socket.id);
 
-    votes[scenarioIndex][category] = (votes[scenarioIndex][category] || 0) + 1;
+    room.votes[scenarioIndex][category] = (room.votes[scenarioIndex][category] || 0) + 1;
 
-    // Tell this student they voted
-    socket.emit("votedConfirm", {
-      category,
-      votes: resultsRevealed[scenarioIndex] ? votes[scenarioIndex] : null,
-    });
+    // Confirm to this student
+    socket.emit("votedConfirm", { category });
 
     // Update teacher with live votes
-    io.emit("votesUpdated", {
+    io.to(myRoom).emit("votesUpdated", {
       scenarioIndex,
-      votes: votes[scenarioIndex],
-      totalVoters: voterIds[scenarioIndex].size,
+      votes: room.votes[scenarioIndex],
+      totalVoters: room.voterIds[scenarioIndex].size,
     });
   });
 
   // Teacher reveals results
   socket.on("teacher:revealResults", (index) => {
-    resultsRevealed[index] = true;
-    io.emit("resultsRevealed", {
+    if (!myRoom || !rooms[myRoom]) return;
+    rooms[myRoom].resultsRevealed[index] = true;
+    io.to(myRoom).emit("resultsRevealed", {
       scenarioIndex: index,
-      votes: votes[index] || {},
+      votes: rooms[myRoom].votes[index] || {},
     });
   });
 
-  // Teacher clears votes for current scenario
+  // Teacher clears votes
   socket.on("teacher:clearVotes", (index) => {
-    votes[index] = {};
-    voterIds[index] = new Set();
-    resultsRevealed[index] = false;
-    io.emit("votesCleared", { scenarioIndex: index });
+    if (!myRoom || !rooms[myRoom]) return;
+    const room = rooms[myRoom];
+    room.votes[index] = {};
+    room.voterIds[index] = new Set();
+    room.resultsRevealed[index] = false;
+    io.to(myRoom).emit("votesCleared", { scenarioIndex: index });
   });
 
+  // Disconnect
   socket.on("disconnect", () => {
-    if (!isTeacher) {
-      connectedStudents = Math.max(0, connectedStudents - 1);
-      io.emit("studentCount", connectedStudents);
+    if (!myRoom || !rooms[myRoom]) return;
+
+    if (myRole === "student") {
+      rooms[myRoom].studentCount = Math.max(0, rooms[myRoom].studentCount - 1);
+      io.to(myRoom).emit("studentCount", rooms[myRoom].studentCount);
+    }
+
+    if (myRole === "teacher") {
+      // Notify students the host left
+      io.to(myRoom).emit("hostDisconnected");
+      delete rooms[myRoom];
     }
   });
 });
 
-// ── Start ──────────────────────────────────────────────────
+// ── Start ──────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
-  // Get local IP for sharing
   const os = require("os");
   const interfaces = os.networkInterfaces();
   let localIP = "localhost";
@@ -124,6 +175,5 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`║  LAN:   http://${localIP}:${PORT}                 ║`);
   console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
-  console.log("Share the URL. Click 'Host this session' to control scenarios.");
   console.log("Press Ctrl+C to stop the server.");
 });
